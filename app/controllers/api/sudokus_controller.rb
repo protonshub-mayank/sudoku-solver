@@ -6,7 +6,7 @@ class Api::SudokusController < ApplicationController
 
   rescue_from NonSolavableError, with: :handle_non_solvable
 
-
+  # Pass as an array
   # {
   #   "data": [
   #     [2, null, 5, null, null, 9, null, null, 4],
@@ -21,6 +21,38 @@ class Api::SudokusController < ApplicationController
   #   ]
   # }
 
+  # Curl request
+  # curl --location --request POST 'localhost:3000/api/sudoku' \
+  # --header 'Content-Type: application/json' \
+  # --data-raw '{
+  #   "data": [[2, null, 5, null, null, 9, null, null, 4],[null, null, null, null, null, null, 3, null, 7],[7, null, null, 8, 5, 6, null, 1, null],[4, 5, null, 7, null, null, null, null, null],[null, null, 9, null, null, null, 1, null, null],[null, null, null, null, null, 2, null, 8, 5],[null, 2, null, 4, 1, 8, null, null, 6], [6, null, 8, null, null, null, null, null, null],[1, null, null, 2, null, null, 7, null, 8]]
+  # }'
+
+  # Pass as a string
+  # {
+  #   "data": "[[2, null, 5, null, null, 9, null, null, 4],[null, null, null, null, null, null, 3, null, 7],[7, null, null, 8, 5, 6, null, 1, null],[4, 5, null, 7, null, null, null, null, null],[null, null, 9, null, null, null, 1, null, null],[null, null, null, null, null, 2, null, 8, 5],[null, 2, null, 4, 1, 8, null, null, 6],[6, null, 8, null, null, null, null, null, null],[1, null, null, 2, null, null, 7, null, 8]]"
+  # }
+
+  # Curl request
+  # curl --location --request POST 'localhost:3000/api/sudoku' \
+  # --header 'Content-Type: application/json' \
+  # --data-raw '  {
+  #   "data": "[[2, null, 5, null, null, 9, null, null, 4],[null, null, null, null, null, null, 3, null, 7],[7, null, null, 8, 5, 6, null, 1, null],[4, 5, null, 7, null, null, null, null, null],[null, null, 9, null, null, null, 1, null, null],[null, null, null, null, null, 2, null, 8, 5],[null, 2, null, 4, 1, 8, null, null, 6], [6, null, 8, null, null, null, null, null, null],[1, null, null, 2, null, null, 7, null, 8]]"
+  # }'
+
+  # {
+  #   "solution": [
+  #     [2, 1, 5, 3, 7, 9, 8, 6, 4],
+  #     [9, 8, 6, 1, 2, 4, 3, 5, 7],
+  #     [7, 3, 4, 8, 5, 6, 2, 1, 9],
+  #     [4, 5, 2, 7, 8, 1, 6, 9, 3],
+  #     [8, 6, 9, 5, 4, 3, 1, 7, 2],
+  #     [3, 7, 1, 6, 9, 2, 4, 8, 5],
+  #     [5, 2, 7, 4, 1, 8, 9, 3, 6],
+  #     [6, 4, 8, 9, 3, 7, 5, 2, 1],
+  #     [1, 9, 3, 2, 6, 5, 7, 4, 8]
+  #   ]
+  # }
 
   # need better algo for this
   # {
@@ -38,15 +70,29 @@ class Api::SudokusController < ApplicationController
   # }
 
   def create
-    grid = params["data"].dup
+    grid = if params["data"].is_a?(String)
+      JSON.parse(params["data"])
+    else
+      params["data"].dup
+    end
     solve_grid!(grid)
     render json: {solution: grid}
   end
 
   private
     def validate_input
-      unless params["data"].size == 9 && params["data"][0].size == 9
-        render json: {error: "Array size should be 9X9"}, status: 422
+      data = if params["data"].is_a?(String)
+        JSON.parse(params["data"])
+      else
+        params["data"].dup
+      end
+
+      if data.is_a?(Array)
+        unless data.size == 9 && data.all? {|a| a.is_a?(Array) && a.size == 9}
+          render json: {error: "Array size should be 9X9"}, status: 422
+        end
+      else
+        render json: {error: "Input must be an array"}, status: 422
       end
     end
 
