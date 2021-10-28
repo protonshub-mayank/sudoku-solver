@@ -1,6 +1,6 @@
 ## Changes in following file
 1. [SudokusController](app/controllers/api/sudokus_controller.rb)
-2. [Application.rb](config/application.rb)
+2. [Application.rb](config/application.rb#L36)
 3. [Routes](config/routes.rb)
 
 
